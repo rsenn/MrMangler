@@ -1,5 +1,8 @@
 %option noyywrap
 %option never-interactive
+%option yylineno
+/*%option bison-locations*/
+
 %{
 #include "FuncDecl.h"
 #include "MrParser.h"
@@ -8,6 +11,8 @@
 #define YY_DECL extern "C" int yylex()
 %}
 %%
+"typeinfo"  {return TYPEINFO;}
+"for"       {return FOR;}
 "void"      {return VOID;}
 "wchar_t"   {return WCHAR;}
 "bool"      {return BOOL;}
@@ -43,7 +48,7 @@
 "static" {return STATIC;}
 
 [0-9]+ {yylval.sval = strdup(yytext); return NUM_LITERAL;}
-[a-zA-Z0-9_]+ {yylval.sval = strdup(yytext); return STRING_LITERAL;}
+[a-zA-Z0-9_:]+ {yylval.sval = strdup(yytext); return STRING_LITERAL;}
 
 "..." {return ELLIPSIS;}
 "*" { return '*';}

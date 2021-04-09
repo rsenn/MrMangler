@@ -1,10 +1,26 @@
 #include <cassert>
 #include <cstring>
+#include <iostream>
 #include <sstream>
 #include <typeinfo>
 
 #include "FuncDecl.h"
 #include "MrMangler.h"
+
+std::string
+mangle_nested(const std::string& str) {
+  std::ostringstream os;
+  int i, len = str.size(), delim;
+  for(i = 0; i < len;) {
+    if((delim = str.find("::", i)) == std::string::npos)
+      delim = len;
+
+    os << (delim - i) << str.substr(i, delim - i);
+
+    i = delim + 2;
+  }
+  return os.str();
+}
 
 // Return mangled symbol for a builtin type with optional signed modifier
 static std::string mangle_type(const BuiltinType t, const uint8_t mods)
@@ -147,7 +163,7 @@ static std::string mangle_param(const ASTNode* p)
     const ASTUserType* u = static_cast<const ASTUserType*>(p);
     // Get name of user defined type
     const std::string& name = u->name;
-    mangled.append(std::to_string(name.length()).append(name));
+    mangled.append(mangle_nested(name));
   }
   else if (typeid(*p) == typeid(ASTReference))
   {
@@ -219,7 +235,18 @@ std::string mangle_itanium(const std::shared_ptr<FuncDecl> decl, const CCOption_
 {
   std::ostringstream mangled;
   // Mangle function name
-  mangled << "_Z" << strlen(decl->name) << decl->name;
+  mangled << "_Z";
+
+  if(decl->type_info)
+    mangled << "TI";
+  if(decl->name.find("::") != std::string::npos)
+    mangled << 'N';
+  if(decl->const_this)
+    mangled << 'K';
+
+  mangled << mangle_nested(decl->name);
+
+  //std::cerr << "name: " <<  decl->name << std::endl;
 
   const std::vector<const ASTNode*>& params = decl->params;
   if (params.empty())
@@ -229,7 +256,7 @@ std::string mangle_itanium(const std::shared_ptr<FuncDecl> decl, const CCOption_
   }
 
   for (auto p : params)
-    mangled << mangle_param(p);
+      mangled << mangle_param(p);
 
   return mangled.str();
 }

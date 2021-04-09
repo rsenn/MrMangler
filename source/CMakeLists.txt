@@ -32,3 +32,4 @@ message(FATAL "Could not locate flex")
 endif(FLEX_FOUND)
 
 add_library(libMrMangler itanium.cpp windows.cpp ${FlexOutput} ${BisonOutput})
+install(TARGETS libMrMangler DESTINATION lib)

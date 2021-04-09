@@ -1,4 +1,7 @@
+%locations
+
 %{
+
 #include <iostream>
 #include <typeinfo>
 #include <string>
@@ -12,6 +15,7 @@ void yyerror(const char* s);
 extern "C" int yylex();
 extern "C" int yyparse();
 extern "C" int yydebug;
+extern "C" int yylineno, yyget_column();
 
 FuncDecl* func_decl = nullptr;
 %}
@@ -34,7 +38,7 @@ FuncDecl* func_decl = nullptr;
 %token STRUCT UNION ENUM
 %token<sval> STRING_LITERAL NUM_LITERAL
 %token ELLIPSIS
-%token STATIC
+%token STATIC TYPEINFO FOR NEST
 
 %type<decl> parameter_list parameter_type_list typed_decl named_decl
 %type<decl> return_decl function_decl
@@ -62,6 +66,8 @@ function_decl
  | return_decl ';'         {func_decl = $1;}
  | STATIC return_decl ';'  {func_decl = $2;}
  | STATIC return_decl      {func_decl = $2;}
+ | TYPEINFO FOR return_decl ';'  {func_decl = $3; func_decl->type_info = true; }
+ | TYPEINFO FOR return_decl      {func_decl = $3; func_decl->type_info = true; }
  ;
 
 return_decl
@@ -70,7 +76,8 @@ return_decl
  ;
 
 named_decl
- : STRING_LITERAL typed_decl {$$ = $2; $$->name = $1;}
+ : STRING_LITERAL typed_decl CONST {$$ = $2; $$->name += $1; $$->const_this = true; }
+ | STRING_LITERAL typed_decl {$$ = $2; $$->name += $1;}
  ;
 
 typed_decl
@@ -304,6 +311,6 @@ FuncDecl* ParseStdin() {
 }
 
 void yyerror(const char* s) {
-  printf("Exiting, parse error '%s'\n", s);
+  printf("Exiting, parse error '%s' %d\n", s, yylineno);
   exit(1);
 }

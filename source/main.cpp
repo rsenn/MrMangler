@@ -1,8 +1,13 @@
 #include <cstring>
 #include <iostream>
+#include <tuple>
 
 #include "FuncDecl.h"
 #include "MrMangler.h"
+
+typedef struct yy_buffer_state *YY_BUFFER_STATE;
+
+extern YY_BUFFER_STATE yy_scan_string ( const char *yy_str  );
 
 void printHelp()
 {
@@ -25,11 +30,12 @@ void printHelp()
             << "Calling convention used for msvc mangling, defaults to cdecl." << std::endl;
 }
 
-std::pair<mangle_fn, CCOption_e> parseArgs(int argc, char** argv)
+std::tuple<mangle_fn, CCOption_e, int> parseArgs(int argc, char** argv)
 {
+  int i;
   mangle_fn return_fn = &mangle_itanium;
   CCOption_e return_cc = CCOption_e::Cdecl;
-  for (int i = 1; i < argc; ++i)
+  for (i = 1; i < argc; ++i)
   {
     if (0 == strcmp(argv[i], "--help") || 0 == strcmp(argv[i], "-h"))
     {
@@ -65,10 +71,11 @@ std::pair<mangle_fn, CCOption_e> parseArgs(int argc, char** argv)
       continue;
     }
 
-    std::cout << "Ignoring unknown option " << argv[i] << std::endl;
+break;
+//    std::cout << "Ignoring unknown option " << argv[i] << std::endl;
   }
 
-  return {return_fn, return_cc};
+  return {return_fn, return_cc, i};
 }
 
 int main(int argc, char** argv)
@@ -81,9 +88,15 @@ int main(int argc, char** argv)
   if (argc > 1)
   {
     auto parsed_pair = parseArgs(argc, argv); // structured bindings in future
-    target_mangler = parsed_pair.first;
-    target_cc = parsed_pair.second;
+    target_mangler = std::get<0>(parsed_pair);
+    target_cc = std::get<1>(parsed_pair);
+
+    if(std::get<2>(parsed_pair) < argc)
+      yy_scan_string(argv[std::get<2>(parsed_pair)]);
   }
+
+
+
 
   // Parse user input into FuncDecl AST
   const std::shared_ptr<FuncDecl> func_decl(ParseStdin());

@@ -34,7 +34,8 @@ enum class BuiltinType
   CHAR32,
   CHAR16,
   AUTO,
-  NULLPTR
+  NULLPTR,
+  TYPEINFO
 };
 
 // Base class all the AST nodes derive from
@@ -180,9 +181,11 @@ struct ASTFunctor final : ASTNode
 // by the parser
 struct FuncDecl final
 {
-  const char* name;
+  std::string name;
   std::vector<const ASTNode*> params;
   const ASTNode* return_val;
+  bool type_info;
+  bool const_this;
 
   // Delete all the AST nodes
   ~FuncDecl()
