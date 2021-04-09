@@ -10,3 +10,5 @@ add_subdirectory(source)
 
 add_executable(MrMangler "source/main.cpp")
 target_link_libraries(MrMangler LINK_PUBLIC libMrMangler)
+
+install(TARGETS MrMangler DESTINATION bin)
